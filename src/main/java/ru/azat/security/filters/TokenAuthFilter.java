@@ -24,6 +24,8 @@ public class TokenAuthFilter implements Filter {
 
         TokenAuthentication tokenAuthentication = new TokenAuthentication(token);
 
+        System.out.println(token);
+
         if (token == null) {
             tokenAuthentication.setAuthenticated(false);
         } else {
