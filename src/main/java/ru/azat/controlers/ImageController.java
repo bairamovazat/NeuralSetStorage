@@ -1,15 +1,19 @@
 package ru.azat.controlers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import ru.azat.services.ImageService;
+import ru.azat.transfer.FileDto;
 import ru.azat.transfer.ImageDto;
 
 @RestController
 @RequestMapping("/image")
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("isAnonymous()")
 @CrossOrigin(origins = "*")
 public class ImageController {
 
@@ -27,11 +31,6 @@ public class ImageController {
         }
     }
 
-    @PostMapping("/generateRandom")
-    public void generateRandom(@RequestParam("count") Integer count) {
-        imageService.generateRandom(count);
-    }
-
     @GetMapping("/{imageId}")
     @PreAuthorize("isAnonymous()")
     public ResponseEntity<ImageDto> getImage(@PathVariable("imageId") Long imageId) {
@@ -42,6 +41,16 @@ public class ImageController {
         } else {
             return ResponseEntity.ok(imageDto);
         }
+    }
+
+    @GetMapping("/{imageId}/file")
+    @PreAuthorize("isAnonymous()")
+    public ResponseEntity<byte[]> getFile(@PathVariable("imageId") Long imageId) {
+        FileDto file = imageService.getFile(imageId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+                .body(file.getData());
     }
 
     @PutMapping("/{imageId}/status")
@@ -56,13 +65,23 @@ public class ImageController {
         }
     }
 
-    @PostMapping()
-    public ResponseEntity createImage(@RequestBody ImageDto imageDto) {
+    @PostMapping("/upload")
+    public ResponseEntity createImage(@RequestParam("file") MultipartFile file, ImageDto imageDto) {
         try {
-            ImageDto image = imageService.createImage(imageDto);
-            return ResponseEntity.ok(image);
+            ImageDto image = imageService.createImage(file, imageDto);
+            return ResponseEntity.status(HttpStatus.OK).body(image);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e);
+        }
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity importFromZip(@RequestParam("file") MultipartFile file) {
+        try {
+            imageService.importZip(file);
+            return ResponseEntity.ok(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e);
         }
     }
 }

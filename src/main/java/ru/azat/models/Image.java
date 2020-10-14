@@ -28,10 +28,9 @@ public class Image {
 
     private String description;
 
-    @Lob
-    @Lazy
-    @Column
-    private byte[] data;
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "file_id")
+    private File file;
 
     @Enumerated(value = EnumType.STRING)
     private ImageStatus status;
@@ -40,6 +39,6 @@ public class Image {
     @JoinColumn(name = "uploaded_user_id")
     private User uploadedUser;
 
-    @OneToMany(mappedBy = "image")
+    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL)
     private List<ImageVote> imageVoteList;
 }

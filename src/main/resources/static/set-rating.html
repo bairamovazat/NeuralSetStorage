@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Set rating</title>
+</head>
+<body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<h5>
+    Оцените изображение
+</h5>
+
+<div style="width: 100vw; min-height: 250px; background: azure">
+    <img src="" id="image">
+</div>
+
+<div id="coefficient">
+    <h5>
+        Выберите коэффициент усталости
+    </h5>
+
+    <div style="width: 100vw">
+        <button class="btn btn-primary" onclick="setCoefficient(0.0)">
+            0%
+        </button>
+        <button class="btn btn-primary" onclick="setCoefficient(0.2)">
+            20%
+        </button>
+        <button class="btn btn-default" onclick="setCoefficient(0.4)">
+            40%
+        </button>
+        <button class="btn btn-default" onclick="setCoefficient(0.6)">
+            60%
+        </button>
+        <button class="btn btn-danger" onclick="setCoefficient(0.8)">
+            80%
+        </button>
+        <button class="btn btn-danger" onclick="setCoefficient(1)">
+            100%
+        </button>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    let host = ".";
+    // let host = "https://neural-dataset-storage.herokuapp.com";
+
+    let lastImage = null;
+
+    $( document ).ready(function() {
+        getNextImage();
+    });
+
+    function getNextImage() {
+        document.getElementById("coefficient").style.display = "none";
+
+        $.ajax(host + '/image/next',
+            {
+                dataType: 'json',
+                timeout: 5000,
+                success: function (data, status, xhr) {
+                    updateImage(data)
+                },
+                error: function (jqXhr, textStatus, errorMessage) { // error callback
+                    if(jqXhr.status == 404) {
+                        alert("Изображений больше нет");
+                    } else {
+                        alert('Error: ' + errorMessage);
+                    }
+                }
+            });
+    }
+
+    function updateImage(image) {
+        lastImage = image;
+        let imageUrl = "./image/" + image.id + "/file";
+        document.getElementById("image").src = imageUrl;
+        document.getElementById("coefficient").style.display = "block";
+    }
+
+    function setCoefficient(rating) {
+        $.ajax(host + '/image/' + lastImage.id + "/status" + "?rating=" + rating,
+            {
+                dataType: 'json',
+                type: 'PUT',
+                timeout: 5000,
+                success: function (data, status, xhr) {
+                    getNextImage()
+                },
+                error: function (jqXhr, textStatus, errorMessage) { // error callback
+                    alert('Error: ' + errorMessage);
+                }
+            });
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+</head>
+<body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">Navbar</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="./index.html">search image</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="./set-rating.html">set-rating</a>
+            </li>
+			<li class="nav-item">
+				<a class="nav-link" href="./upload-image.html">upload-image</a>
+			</li>
+            <li class="nav-item">
+                <a class="nav-link" href="./upload-zip.html">upload-zip</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+
+<div style="width: 100vh; min-height: 250px">
+    <img src="" id="image">
+</div>
+
+<lable for="imageId">Введите ID</lable>
+<input type="text" name="" id="imageId">
+
+<button onclick="update()">
+    Показать
+</button>
+
+<script type="text/javascript">
+
+    let host = ".";
+
+    // let host = "https://neural-dataset-storage.herokuapp.com";
+
+    function update(event) {
+        getImage(document.getElementById("imageId").value)
+    }
+
+    function getImage(id) {
+        var xhr = new XMLHttpRequest();
+
+        xhr.open('GET', host + '/image/' + id, true);
+        xhr.send();
+
+        xhr.onload = function () {
+            if (xhr.status != 200) {
+                alert(`Ошибка ${xhr.status}: ${xhr.statusText}`);
+            } else {
+                updateImage(JSON.parse(xhr.response));
+            }
+        };
+
+    }
+
+    function updateImage(response) {
+        let imageUrl = "./image/" + response.id + "/file";
+        document.getElementById("image").src = imageUrl;
+    }
+
+</script>
+</body>
+</html>

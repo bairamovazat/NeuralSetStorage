@@ -1,21 +1,23 @@
 package ru.azat.services;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
-import ru.azat.models.Image;
-import ru.azat.models.ImageStatus;
-import ru.azat.models.User;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import ru.azat.models.*;
 import ru.azat.repositories.ImageRepository;
 import ru.azat.repositories.UsersRepository;
+import ru.azat.transfer.FileDto;
 import ru.azat.transfer.ImageDto;
-import ru.azat.utils.GenerateImageDataUtils;
 
-import java.util.Base64;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 @Service
 public class ImageServiceImpl implements ImageService {
@@ -35,16 +37,71 @@ public class ImageServiceImpl implements ImageService {
     private ReentrantLock reentrantLock = new ReentrantLock();
 
     @Override
+    public void importZip(MultipartFile file) throws IOException {
+
+        ZipInputStream zipInputStream = new ZipInputStream(file.getInputStream());
+
+        ZipEntry entry = null;
+        while ((entry = zipInputStream.getNextEntry()) != null) {
+            String name = entry.getName();
+
+            if(!entry.isDirectory() && name.endsWith(".jpg")) {
+                createImageFromZipEntry(entry, zipInputStream);
+
+            }
+        }
+    }
+
+    public void createImageFromZipEntry(ZipEntry zipEntry, ZipInputStream zipInputStream) throws IOException {
+        byte[] fileData = IOUtils.toByteArray(zipInputStream);
+
+        transactionTemplate.execute((transactionStatus -> {
+            User user = authorizationService.getCurrentUser();
+
+            String fileName = StringUtils.cleanPath(zipEntry.getName());
+            File file;
+            file = File.builder()
+                    .name(fileName)
+                    .type(null)
+                    .data(fileData)
+                    .build();
+
+            Image image = Image.builder()
+                    .name(fileName)
+                    .description(zipEntry.getName())
+                    .file(file)
+                    .status(ImageStatus.NEW)
+                    .uploadedUser(user == null ? null : usersRepository.findOne(user.getId()))
+                    .build();
+
+            return ImageDto.from(imageRepository.save(image));
+        }));
+
+    }
+
+    @Override
     @Transactional
-    public ImageDto createImage(ImageDto imageDto) {
+    public ImageDto createImage(MultipartFile multipartFile, ImageDto imageDto) {
         User user = authorizationService.getCurrentUser();
+
+        String fileName = StringUtils.cleanPath(multipartFile.getOriginalFilename());
+        File file;
+        try {
+            file = File.builder()
+                    .name(fileName)
+                    .type(multipartFile.getContentType())
+                    .data(multipartFile.getBytes())
+                    .build();
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
 
         Image image = Image.builder()
                 .name(imageDto.getName())
                 .description(imageDto.getDescription())
-                .data(Base64.getDecoder().decode(imageDto.getDataBase64()))
+                .file(file)
                 .status(ImageStatus.NEW)
-                .uploadedUser(usersRepository.findOne(user.getId()))
+                .uploadedUser(user == null ? null : usersRepository.findOne(user.getId()))
                 .build();
 
         return ImageDto.from(imageRepository.save(image));
@@ -52,23 +109,16 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     @Transactional
-    public ImageDto getImage(Long imageId) {
-        return ImageDto.from(imageRepository.getOne(imageId));
+    public FileDto getFile(Long imageId) {
+        Image image = imageRepository.findOne(imageId);
+        return FileDto.from(image.getFile());
     }
 
+
     @Override
-    public void generateRandom(int count) {
-        for (int i = 0; i < count; i++) {
-            final int index = i;
-            transactionTemplate.execute((status) -> {
-                createImage(ImageDto.builder()
-                        .name("Generated " + index)
-                        .description("Generated description " + index)
-                        .dataBase64(GenerateImageDataUtils.generateBase64ImageData())
-                        .build());
-                return index;
-            });
-        }
+    @Transactional
+    public ImageDto getImage(Long imageId) {
+        return ImageDto.from(imageRepository.getOne(imageId));
     }
 
     @Override
@@ -94,8 +144,17 @@ public class ImageServiceImpl implements ImageService {
     @Override
     @Transactional
     public ImageDto setRating(Long imageId, Float rating) {
+        User user = authorizationService.getCurrentUser();
+        user = user == null ? null : usersRepository.findOne(user.getId());
+
         Image image = imageRepository.findOne(imageId);
         image.setStatus(ImageStatus.VOTED);
+        ImageVote imageVote = ImageVote.builder()
+                .image(image)
+                .voitedUser(user)
+                .rating(rating)
+                .build();
+        image.getImageVoteList().add(imageVote);
         return ImageDto.from(image);
     }
 

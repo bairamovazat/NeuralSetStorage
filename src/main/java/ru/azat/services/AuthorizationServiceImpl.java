@@ -13,8 +13,10 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Override
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+
         if (!(authentication instanceof TokenAuthentication)) {
-            throw new IllegalArgumentException("TokenAuthentication не найден");
+            return null;
         }
 
         TokenAuthentication tokenAuthentication = (TokenAuthentication) authentication;

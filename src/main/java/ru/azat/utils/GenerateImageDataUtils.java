@@ -15,7 +15,7 @@ public class GenerateImageDataUtils {
         Random random = new Random();
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) random.nextInt(256);
+            data[i] = (byte) 0;
         }
 
         return data;

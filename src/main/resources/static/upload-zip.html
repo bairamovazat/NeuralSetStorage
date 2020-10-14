@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UploadZip</title>
+</head>
+<body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<form method="POST" action="image/import" enctype="multipart/form-data">
+    <div>
+        <label>
+            Выберите zip файл c фотографиями
+            <input type="file" name="file">
+        </label>
+    </div>
+
+    <div>
+        <label>
+            Введите название
+            <input name="name">
+        </label>
+    </div>
+    <div>
+        <label>
+            Введите описание
+            <input name="description">
+        </label>
+    </div>
+    <button type="submit">
+        Отправить
+    </button>
+</form>
+
+</body>
+</html>
