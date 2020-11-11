@@ -87,7 +87,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     private String generateZipName(ImageVote imageVote) {
-        return imageVote.getImage().getId() + "_" + imageVote.getRating() + ".jpg";
+        return imageVote.getRating() + "/" + imageVote.getImage().getId() + ".jpg";
     }
 
     public void createImageFromZipEntry(ZipEntry zipEntry, ZipInputStream zipInputStream) throws IOException {
