@@ -19,7 +19,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -69,7 +71,12 @@ public class ImageServiceImpl implements ImageService {
 
         List<ImageVote> allImages = imageVoteRepository.getAllAndEagerImage();
 
+        Set<Long> usedIds = new HashSet<>();
         for (ImageVote imageVote : allImages) {
+            if(usedIds.contains(imageVote.getImage().getId())) {
+                continue;
+            }
+            usedIds.add(imageVote.getImage().getId());
             byte [] data = imageVote.getImage().getFile().getData();
             zipOutputStream.putNextEntry(new ZipEntry(generateZipName(imageVote)));
             zipOutputStream.write(data);
