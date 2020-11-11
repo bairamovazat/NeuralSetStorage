@@ -63,6 +63,7 @@ public class ImageController {
         try {
             imageService.getVotedImageArchive(response);
         } catch (IOException e) {
+            e.printStackTrace();
             response.setStatus(500);
         }
     }
