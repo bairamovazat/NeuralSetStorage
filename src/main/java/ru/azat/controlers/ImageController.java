@@ -11,6 +11,9 @@ import ru.azat.services.ImageService;
 import ru.azat.transfer.FileDto;
 import ru.azat.transfer.ImageDto;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/image")
 @PreAuthorize("isAnonymous()")
@@ -51,6 +54,17 @@ public class ImageController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
                 .body(file.getData());
+    }
+
+    @GetMapping("/voted")
+    @PreAuthorize("isAnonymous()")
+    public void getArchive(HttpServletResponse response) {
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"voted.zip\"");
+        try {
+            imageService.getVotedImageArchive(response);
+        } catch (IOException e) {
+            response.setStatus(500);
+        }
     }
 
     @PutMapping("/{imageId}/status")

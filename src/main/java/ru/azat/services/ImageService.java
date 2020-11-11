@@ -1,11 +1,10 @@
 package ru.azat.services;
 
 import org.springframework.web.multipart.MultipartFile;
-import ru.azat.models.File;
-import ru.azat.models.Image;
 import ru.azat.transfer.FileDto;
 import ru.azat.transfer.ImageDto;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public interface ImageService {
@@ -20,5 +19,7 @@ public interface ImageService {
     FileDto getFile(Long imageId);
 
     void importZip(MultipartFile file) throws IOException;
+
+    void getVotedImageArchive(HttpServletResponse response) throws IOException;
 
 }

@@ -10,14 +10,20 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import ru.azat.models.*;
 import ru.azat.repositories.ImageRepository;
+import ru.azat.repositories.ImageVoteRepository;
 import ru.azat.repositories.UsersRepository;
 import ru.azat.transfer.FileDto;
 import ru.azat.transfer.ImageDto;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class ImageServiceImpl implements ImageService {
@@ -36,6 +42,9 @@ public class ImageServiceImpl implements ImageService {
 
     private ReentrantLock reentrantLock = new ReentrantLock();
 
+    @Autowired
+    private ImageVoteRepository imageVoteRepository;
+
     @Override
     public void importZip(MultipartFile file) throws IOException {
 
@@ -50,6 +59,28 @@ public class ImageServiceImpl implements ImageService {
 
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public void getVotedImageArchive(HttpServletResponse response) throws IOException {
+
+        ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream());
+
+        List<ImageVote> allImages = imageVoteRepository.getAllAndEagerImage();
+
+        for (ImageVote imageVote : allImages) {
+            byte [] data = imageVote.getImage().getFile().getData();
+            zipOutputStream.putNextEntry(new ZipEntry(generateZipName(imageVote)));
+            zipOutputStream.write(data);
+            zipOutputStream.closeEntry();
+        }
+
+        zipOutputStream.close();
+    }
+
+    private String generateZipName(ImageVote imageVote) {
+        return imageVote.getImage().getId() + "_" + imageVote.getRating() + ".jpg";
     }
 
     public void createImageFromZipEntry(ZipEntry zipEntry, ZipInputStream zipInputStream) throws IOException {
